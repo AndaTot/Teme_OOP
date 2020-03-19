@@ -1,0 +1,530 @@
+#include <iostream>
+#include <cstring>
+#include <cctype>
+using namespace std;
+
+class student {
+private:
+    char nume[30];
+    int an_nastere, nr_credite;
+    double media_generala;
+
+public:
+    student(char*, int, int, double); ///constructor de initializarea
+
+    ~student();                       ///destructor
+
+    void set_nume(char*);
+    void set_an_nastere(int);
+    void set_nr_credite(int);
+    void set_media_generala(double);
+
+    char* get_nume() { return nume; };
+    int get_an_nastere() { return an_nastere; };
+    int get_nr_credite() { return nr_credite; };
+    double get_media_generala() { return media_generala; };
+
+    void afisare_student(ostream& out);
+    void citire_student(istream& in);
+
+    friend class grupa;
+    friend istream& operator>>(istream& in, student& z);
+    friend ostream& operator<<(ostream& out, student& z);
+
+};
+student::student(char* nume = NULL, int an_nastere = 0, int nr_credite = 0, double media_generala = 0)
+{
+    this->an_nastere = an_nastere;
+    this->nr_credite = nr_credite;
+    this->media_generala = media_generala;
+}
+class grupa {
+private:
+    char nume_grupa[30];
+    student* studenti = new student;
+    int nr_stud;
+    double media_grupei;
+public:
+    grupa(char*, student*, int, double);
+    friend class student;
+    void afisare_grupa(ostream& out);
+    void citire_grupa(istream& in);
+    ~grupa();
+
+    friend istream& operator>>(istream& in, grupa& z);
+    friend ostream& operator<<(ostream& out, grupa& z);
+
+    void set_nume_grupa(char*);
+    void set_media_grupei(double);
+    void set_nr_studenti(int);
+    void set_studenti(student*);
+
+    char* get_nume_grupa() { return nume_grupa; };
+    int& get_nr_studenti() { return nr_stud; };
+    student* get_studenti() { return studenti; };
+    double get_media_grupei() { return media_grupei; };
+};
+
+
+void cauta_student(char*, int, student*);
+void sterge_student(char*, int&, student*);             ///functie pentru a sterge studentii care nu sunt intr-o grupa
+void sterge_student_gr(char*, int&, student*, int, grupa*, char*);     ///functie pentru a sterge studentii care nu sunt intr-o grupa
+
+
+void student::set_nume(char* x) {
+    strcpy(nume, x);
+}
+
+void student::set_an_nastere(int x) {
+    an_nastere = x;
+}
+void student::set_nr_credite(int x) {
+    nr_credite = x;
+}
+void student::set_media_generala(double x) {
+    media_generala = x;
+}
+
+inline void student::citire_student(istream& in) {
+    cout << "Introduceti numele: ";
+    in >> nume;
+        for(int i=0; i<strlen(nume); i++)
+        {
+            if(isdigit(nume[i]))
+            {
+                cout<<"Numele introdus nu este valid!"<<'\n';
+                cout << "Introduceti numele: ";
+                in >> nume;
+                i = 0;
+            }
+        }
+    cout << "Introduceti anul nasterii: ";
+    in >> an_nastere;
+    cout << "Introduceti numarul de credite: ";
+    in >> nr_credite;
+    cout << "Introduceti media generala: ";
+    in >> media_generala;
+    cout << endl;
+}
+
+inline istream& operator>>(istream& in, student& z) {
+    char rez[2];
+    z.citire_student(in);
+    if (z.get_nume()==NULL || z.get_an_nastere()==0)
+    {
+        cout<<"Datele citite nu sunt corecte!"<<'\n';
+        cout<<"Introduceti inca o data informatiile despre student:"<<'\n';
+        z.citire_student(in);
+    }
+    if(z.get_media_generala()==0 || z.get_nr_credite()==0)
+    {
+        cout<<"Sunteti sigur de corectitudinea datelor? (DA/NU)"<<'\n';
+        cin>>rez;
+        if(strcmp(rez, "DA")==0){ cout<<"In regula! Datele au fost salvate!";}
+        else{
+            cout<<"Va rugam sa mai cititi inca o data datele studentului!"<<'\n';
+            z.citire_student(in);
+        }
+    }
+    return in;
+}
+inline void student::afisare_student(ostream& out) {
+    out << "Nume: " << nume << '\n';
+    out << "Anul nasterii: " << an_nastere << '\n';
+    out << "Numarul de credite: " << nr_credite << '\n';
+    out << "Media generala: " << media_generala << '\n';
+    cout << endl;
+}
+
+inline ostream& operator<<(ostream& out, student& z) {
+    z.afisare_student(out);
+    return out;
+}
+
+inline void cauta_student(char nume1[], int n, student stud[])
+{
+    int ok=0;
+     for (int i = 0; i < n; i++)
+            {
+                if(strcmp(nume1, stud[i].get_nume())==0){ cout<< stud[i] << '\n'; ok=1;cout<<endl;}
+            }
+    if(ok==0) cout<<"Studentul nu a fost gasit!"<<endl;
+}
+
+inline void sterge_student(char nume2[], int &n, student* stud)
+{
+    char rez[2];
+    for (int i = 0; i < n; i++)
+            {
+                if(strcmp(nume2, stud[i].get_nume())==0)
+                {
+                    cout<<"Sunteti sigur ca vreti sa stergeti studentul din sistem? (DA/NU)"<<'\n';
+                    cin>>rez;
+                    if(strcmp(rez, "DA")==0){
+                            stud[i].~student();
+                            for(int j=i+1; j<n; j++)
+                            {
+                                stud[i].set_nume(stud[j].get_nume());
+                                stud[i].set_an_nastere(stud[j].get_an_nastere());
+                                stud[i].set_nr_credite(stud[j].get_nr_credite());
+                                stud[i].set_media_generala(stud[j].get_media_generala());
+                                i=i+1;
+
+                            }
+                            n--;
+                            cout<<"Studentul a fost sters!"<<'\n';
+                    }
+                    else cout<<"Studentul nu a fost sters!";
+                }
+                cout<<endl;
+            }
+    if(n==0) cout<<"Nu mai sunt studenti in sistem!";
+}
+
+inline void sterge_student_gr(char nume2[], int &n, student* stud, int m, grupa* grup, char* nume_grupa)
+{
+    int sum = 0;
+    char rez[2];
+    for (int i = 0; i < n; i++)
+            {
+                if(strcmp(nume2, stud[i].get_nume())==0)
+                {
+                    cout<<"Sunteti sigur ca vreti sa stergeti studentul din sistem? (DA/NU)"<<'\n';
+                    cin>>rez;
+                    if(strcmp(rez, "DA")==0){
+                            stud[i].~student();
+                            for(int j=i+1; j<n; j++)
+                            {
+                                stud[i].set_nume(stud[j].get_nume());
+                                stud[i].set_an_nastere(stud[j].get_an_nastere());
+                                stud[i].set_nr_credite(stud[j].get_nr_credite());
+                                stud[i].set_media_generala(stud[j].get_media_generala());
+                                i=i+1;
+
+                            }
+                            n--;
+                                for(int k=0; k<m; k++)
+                                {
+                                   if(strcmp(nume_grupa, grup[k].get_nume_grupa())==0)
+                                   {
+                                       for(int p=0; p<grup[k].get_nr_studenti(); p++)
+                                       {
+                                           if(strcmp(nume2, grup[k].get_studenti()[p].get_nume())==0)
+                                           {
+                                               for(int j=p+1; j<grup[k].get_nr_studenti(); j++)    ///scoate studentul din grupa
+                                                {
+                                                    grup[k].get_studenti()[p].set_nume(grup[k].get_studenti()[j].get_nume());
+                                                    grup[k].get_studenti()[p].set_an_nastere(grup[k].get_studenti()[j].get_an_nastere());
+                                                    grup[k].get_studenti()[p].set_nr_credite(grup[k].get_studenti()[j].get_nr_credite());
+                                                    grup[k].get_studenti()[p].set_media_generala(grup[k].get_studenti()[j].get_media_generala());
+                                                    p=p+1;
+                                                }
+                                           }
+                                       }
+                                       grup[k].set_nr_studenti(grup[k].get_nr_studenti()-1);
+                                       for(int q=0; q<grup[k].get_nr_studenti(); q++)      ///reface media grupei fara studentul scos
+                                       {
+                                            sum = sum + grup[k].get_studenti()[q].get_media_generala();
+                                       }
+                                        sum = sum / grup[k].get_nr_studenti();
+                                        grup[k].set_media_grupei(sum);
+
+                                       cout<<"Studentul a fost scos din grupa! "<<'\n';
+                                   }
+                                }
+
+                            cout<<"Studentul a fost sters!"<<'\n';
+                    }
+                    else cout<<"Studentul nu a fost sters!";
+                }
+                cout<<endl;
+            }
+    if(n==0) cout<<"Nu mai sunt studenti in sistem!";
+}
+
+student::~student(){
+    this->media_generala=0;
+    this->nr_credite=0;
+    this->an_nastere=0;
+}
+
+grupa::grupa(char* nume_grupa = NULL, student* studenti = 0, int  nr_stud = 0, double media_grupei = 0)
+{
+    this->nr_stud = nr_stud;
+    this->media_grupei = media_grupei;
+}
+
+void sterge_grupa(char*, int&, grupa*);
+
+inline istream& operator>>(istream& in, grupa& z) {
+    z.citire_grupa(in);
+    return in;
+}
+inline void grupa::citire_grupa(istream& in) {
+    cout << "Introduceti numele grupei (folosind cifre): "<<'\n';
+    in >> nume_grupa;
+        for(int r = 0; r<strlen(nume_grupa);  r++)
+        {
+            if(isdigit(nume_grupa[r])==0)
+            {
+                cout<<"Numele nu respecta formatul!"<<'\n';
+                cout << "Introduceti numele grupei (folosind cifre): "<<'\n';
+                in >> nume_grupa;
+                r=0;
+            }
+        }
+    cout<<endl;
+}
+void grupa::set_nume_grupa(char* x){
+    strcpy(nume_grupa, x);
+}
+void grupa::set_media_grupei(double x) {
+    media_grupei = x;
+}
+void grupa::set_nr_studenti(int x) {
+    nr_stud = x;
+}
+inline void grupa::afisare_grupa(ostream& out) {
+    out << "Nume grupa: " << nume_grupa << '\n';
+    out << "Numarul studentilor: " << nr_stud << '\n';
+    out << "Numele studentilor: "<< '\n';
+    for(int i=0; i<nr_stud; i++)
+    {out<< studenti[i].get_nume() <<'\n';}
+    out << "Media grupei: " << media_grupei << '\n';
+    cout << endl;
+}
+inline ostream& operator<<(ostream& out, grupa& z) {
+    z.afisare_grupa(out);
+    return out;
+}
+void adauga_in_grupa(char* nume2,int n, student* stud, char* nume3, int m, grupa* grup){
+    int ok = 0, ok1 = 0, l;
+    double rez = 0;
+     for (int i = 0; i < n; i++)
+            {
+                if(strcmp(nume2, stud[i].get_nume())==0){ cout<<"Acestea sunt datele studentului: " << '\n' << stud[i] << '\n'; ok=1;cout<<endl; l=i;}
+            }
+    if(ok == 0) cout<<"Studentul nu a fost gasit!"<<endl;
+    if(ok == 1)
+    {
+        for (int i = 0; i < m; i++)
+            {
+                if(strcmp(nume3, grup[i].get_nume_grupa())==0){
+                        cout<<"Grupa a fost gasita!"<<'\n';
+                        ok1=1;
+                        grup[i].get_studenti()[grup[i].get_nr_studenti()]=stud[l];
+                        grup[i].set_nr_studenti(grup[i].get_nr_studenti() + 1);
+                        for(int j = 0; j < grup[i].get_nr_studenti()-1; j++)
+                        {
+                            rez = rez + grup[i].get_studenti()[j].get_media_generala();
+                        }
+                        rez = rez + stud[l].get_media_generala();
+                        rez = rez / grup[i].get_nr_studenti();
+                        grup[i].set_media_grupei(rez);
+                }
+            }
+        if(ok1 == 0){
+                cout<<"Grupa nu a fost gasita!"<<'\n';
+                cout<<"Studentul nu a fost adaugat in grupa!"<<'\n';
+        }
+        else cout<<"Studentul a fost adaugat in grupa!";
+    }
+
+}
+
+inline void sterge_grupa(char nume4[], int &m, grupa* grup)
+{
+    char rez[2];
+    for (int i = 0; i < m; i++)
+            {
+                if(strcmp(nume4, grup[i].get_nume_grupa())==0)
+                {
+                    cout<<"Sunteti sigur ca vreti sa stergeti grupa din sistem? (DA/NU)"<<'\n';
+                    cin>>rez;
+                    if(strcmp(rez, "DA")==0){
+                            for(int j=i+1; j<m; j++)
+                            {
+                                grup[i].set_nume_grupa(grup[j].get_nume_grupa());
+                                grup[i].set_nr_studenti(grup[j].get_nr_studenti());
+                                for(int k=0; k<grup[i].get_nr_studenti();k++)
+                                {
+                                    grup[i].get_studenti()[k].set_nume(grup[j].get_studenti()[k].get_nume());
+                                    grup[i].get_studenti()[k].set_media_generala(grup[j].get_studenti()[k].get_media_generala());
+                                    grup[i].get_studenti()[k].set_an_nastere(grup[j].get_studenti()[k].get_an_nastere());
+                                    grup[i].get_studenti()[k].set_nr_credite(grup[j].get_studenti()[k].get_nr_credite());
+
+                                }
+                                grup[i].set_media_grupei(grup[j].get_media_grupei());
+                                i=i+1;
+                            }
+                            m--;
+                            cout<<"Grupa a fost stearsa!"<<'\n';
+                            }
+                    else cout<<"Grupa nu a fost stearsa!";
+                }
+                cout<<endl;
+            }
+    if(m==0) cout<<"Nu mai sunt grupe in sistem!";
+}
+
+inline void cauta_grupa(char nume5[], int m, grupa grup[])
+{
+    int ok=0;
+     for (int i = 0; i < m; i++)
+            {
+                if(strcmp(nume5, grup[i].get_nume_grupa())==0){ cout<< grup[i] << '\n'; ok=1;cout<<endl;}
+            }
+    if(ok==0) cout<<"Grupa nu a fost gasita!"<<endl;
+}
+
+grupa::~grupa(){
+    this->nr_stud = 0;
+    this->media_grupei = 0;
+}
+
+void menu_output()
+{
+    cout << "\n Totilca Anda Grupa 211 - Proiect 12 - Nume proiect: Clasa 'Student' \n";
+    cout << "\n\t MENIU:";
+    cout << "\n===========================================\n";
+    cout << "\n";
+    cout << "1. Adauga studenti"; cout << "\n";
+    cout << "2. Afiseaza datele studentilor actuali"; cout << "\n";
+    cout << "3. Cauta student dupa nume"; cout << "\n";
+    cout << "4. Sterge student din sistem"; cout << "\n";
+    cout << "5. Creeaza grupe"; cout << "\n";
+    cout << "6. Afiseaza grupele existente"; cout << "\n";
+    cout << "7. Adauga student in grupa"; cout << "\n";
+    cout << "8. Sterge grupa"; cout << "\n";
+    cout << "9. Cauta si afiseaza grupa"; cout << "\n";
+    cout << "0. Iesire."; cout << "\n";
+}
+void menu()
+{
+    int option, i, j, k, q, n = 0, m=0;
+    option = 0;
+    student stud[100];
+    grupa grup[100];
+    char raspuns[3];
+    char rasp_nume_gr[5];
+
+    menu_output();
+
+
+    do
+    {
+        cout << "\nIntroduceti numarul actiunii: ";
+        cin >> option;
+        cout<<endl;
+        if (option == 1)
+        {
+            cout << "Cati studenti doriti sa introduceti in sistem: "; cin >> k; cout<<endl;
+            for (i = n; i < (n+k); i++)
+            {
+                cout << "Introduceti datele pentru studentul numarul " << i + 1 << '\n';
+                cin >> stud[i];
+            }
+            n = n + k;
+        }
+        if (option == 2)
+        {
+            cout << "Afiseaza toti studentii din sistem: " << '\n';
+            cout<<endl;
+            if(n==0) cout<<"Nu sunt studenti in sistem!"<<'\n';
+            else{
+                for (i = 0; i < n; i++)
+                {
+                    cout << stud[i] << '\n';
+                }
+            }
+            cout<<endl;
+        }
+        if (option == 3)
+        {
+            char nume1[30];
+            cout<< "Cauta student dupa nume" << '\n';
+            cout<<endl;
+            cout<<"Introduceti numele studentului cautat: ";
+            cin>>nume1;
+            cauta_student(nume1, n, stud);
+        }
+        if (option == 4)
+        {
+             char nume2[30];
+            cout<< "Introduceti numele studentului pe care doriti sa il stergeti: " << '\n';
+            cin>>nume2;
+            cout<< "Face parte studentul dintr-o grupa?(DA/NU)"<< '\n';
+            cin>>raspuns;
+            cout<<'\n';
+            if(strcmp(raspuns, "DA")==0){
+                     cout<< "Introduceti numele grupei: "; cin>>rasp_nume_gr;
+                sterge_student_gr(nume2, n, stud, m, grup, rasp_nume_gr);
+            }
+            else sterge_student(nume2, n, stud);
+        }
+        if (option == 5)
+        {
+            cout<<"Cate grupe doriti sa creeati? "<<'\n'; cin>>q;
+            cout<<endl;
+            for (j = m; j < (m+q); j++)
+            {
+                cout << "Introduceti datele pentru grupa numarul " << j + 1 << '\n';
+                cin >> grup[j];
+            }
+            m = m + q;
+        }
+        if (option == 6)
+        {
+            cout << "Afiseaza toate grupele din sistem: " << '\n';
+            cout<<endl;
+            if(m==0) cout<<"Nu sunt grupe in sistem!"<<'\n';
+            else{
+                for (j = 0; j < m; j++)
+                {
+                    cout << grup[j] << '\n';
+                }
+            }
+            cout<<endl;
+        }
+         if (option == 7)
+        {
+            char nume2[30];
+            cout<< "Introduceti numele studentului pe care doriti sa il adaugati intr-o grupa: " << '\n';
+            cin>>nume2;
+            char nume3[30];
+            cout<< "Introduceti numele grupei in care vreti sa adaugati studentul: " << '\n';
+            cin>>nume3;
+            adauga_in_grupa(nume2, n, stud, nume3, m, grup);
+        }
+        if (option == 8)
+        {
+             char nume4[30];
+            cout<< "Introduceti numele grupei pe care doriti sa o stergeti: " << '\n';
+            cin>>nume4;
+            sterge_grupa(nume4, m, grup);
+        }
+        if(option == 9)
+        {
+             char nume5[30];
+            cout<< "Cauta grupa dupa nume" << '\n';
+            cout<<endl;
+            cout<<"Introduceti numele grupei cautate: ";
+            cin>>nume5;
+            cauta_grupa(nume5, m, grup);
+        }
+        if (option == 0)
+        {
+            cout << "\nEXIT!\n";
+        }
+        if (option < 0 || option>9)
+        {
+            cout << "\nSelectie invalida\n";
+        }
+        cout << "\n";
+    } while (option != 0);
+}
+int main()
+{
+    menu();
+    return 0;
+}
